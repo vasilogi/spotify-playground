@@ -1,0 +1,46 @@
+{
+    "href": "https://api.spotify.com/v1/users/jikus/playlists?offset=0&limit=1",
+    "limit": 1,
+    "next": "https://api.spotify.com/v1/users/jikus/playlists?offset=1&limit=1",
+    "offset": 0,
+    "previous": null,
+    "total": 66,
+    "items": [
+        {
+            "collaborative": false,
+            "description": "A musical time capsule from the past has been unsealed\u2026!",
+            "external_urls": {
+                "spotify": "https://open.spotify.com/playlist/3HEYSg7n18a0aiyWjWKEOr"
+            },
+            "href": "https://api.spotify.com/v1/playlists/3HEYSg7n18a0aiyWjWKEOr",
+            "id": "3HEYSg7n18a0aiyWjWKEOr",
+            "images": [
+                {
+                    "height": null,
+                    "url": "https://image-cdn-ak.spotifycdn.com/image/ab67706c0000da844ab502f01a78edc8eb5072d6",
+                    "width": null
+                }
+            ],
+            "name": "My 2024 Playlist in a Bottle",
+            "owner": {
+                "display_name": "jikus",
+                "external_urls": {
+                    "spotify": "https://open.spotify.com/user/jikus"
+                },
+                "href": "https://api.spotify.com/v1/users/jikus",
+                "id": "jikus",
+                "type": "user",
+                "uri": "spotify:user:jikus"
+            },
+            "primary_color": null,
+            "public": true,
+            "snapshot_id": "AAAAA4v8opADENlln6m2X7LvQruWgp2A",
+            "tracks": {
+                "href": "https://api.spotify.com/v1/playlists/3HEYSg7n18a0aiyWjWKEOr/tracks",
+                "total": 3
+            },
+            "type": "playlist",
+            "uri": "spotify:playlist:3HEYSg7n18a0aiyWjWKEOr"
+        }
+    ]
+}
