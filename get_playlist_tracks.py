@@ -34,7 +34,7 @@ parser = argparse.ArgumentParser(
     )
 
 # Define arguments (required)
-parser.add_argument('playlist_id', help='The playlist ID')
+parser.add_argument('--playlist_id', required=True, help='The playlist ID')
 
 # Parse arguments
 args = parser.parse_args()
@@ -47,7 +47,16 @@ offset=0
 limit=100
 tracks = []
 
-with tqdm(desc='Fetching tracks') as pbar:
+# First get the playlist info to know total tracks
+try:
+    playlist_info = sp.playlist(playlist_id)
+    total_tracks = playlist_info['tracks']['total']
+    print(f"Fetching {total_tracks} tracks from playlist: {playlist_info['name']}")
+    playlist_name = playlist_info['name'].replace(" ", "")
+except Exception as e:
+    print(f"Error getting playlist information: {e}")
+
+with tqdm(total=total_tracks, desc='Fetching tracks') as pbar:
     # handle limit
     while True:
         try:
@@ -56,23 +65,29 @@ with tqdm(desc='Fetching tracks') as pbar:
             # Get playlist items
             playlist_items = playlist_tracks['items']
             # Exit if no playlist items exist
-            if len(playlist_tracks) == 0:
+            if len(playlist_items) == 0:
                 break
+            # Process each track
             for item in playlist_items:
-                track = item['track']
-                tracks.append(
-                    {
-                        'Track ID':track['id'],
-                        'Track Name': track['name'],
-                        'Track Popularity': track['popularity'],
-                        'Track Duration': track['duration_ms'],
-                        'Track Album Name': track['album']['name'],
-                        'Track Artists': ", ".join(artist['name'] for artist in track['artists'])
-                    }
-                )
-            # Increment
+                # check if track exists
+                if item['track'] is not None:
+                    track = item['track']
+                    tracks.append(
+                        {
+                            'Track ID':track['id'],
+                            'Track Name': track['name'],
+                            'Track Popularity': track['popularity'],
+                            'Track Duration': track['duration_ms'],
+                            'Track Album Name': track['album']['name'],
+                            'Track Artists': ", ".join(artist['name'] for artist in track['artists'])
+                        }
+                    )
+            # Update progress and offset
             offset+=limit
             pbar.update(len(playlist_items))
+
+            # Avoid rate limiting with a small pause
+            time.sleep(0.5)
         except Exception as e:
             print(f"Error occured: {e}")
             time.sleep(3)
@@ -80,8 +95,11 @@ with tqdm(desc='Fetching tracks') as pbar:
 
 
 
-# # Save to a CSV file
-# df = pd.DataFrame(albums)
-# df.to_csv('saved_albums.csv', index=False)
-
-# print("Saved albums exported to 'saved_albums.csv'")
+if tracks:
+    # Save to a CSV file
+    df = pd.DataFrame(tracks)
+    output_path='playlist_trakcs_' + playlist_name + '.csv'
+    df.to_csv(output_path, index=False)
+    print(f"Saved albums exported to {output_path}")
+else:
+    print("No tracks were fetched")
