@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 import argparse
 import time
-from tqdm import tqdm
+import os
 
 # Custom modules
 from src.spotify_handler import SpotifyAPI
@@ -27,7 +27,7 @@ def main():
     )
 
     # Authorize Spotify Client
-    spotify.authorize_client(scope=scope)
+    spotify.connect(scope=scope)
 
     # Get all albums
     csv_filepath = cwd / "all_albums.csv"

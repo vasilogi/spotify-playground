@@ -1,6 +1,15 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import pandas as pd
+from tqdm import tqdm
+from .exceptions import (
+    SpotifyAPIError,
+    AuthenticationError,
+    InvalidParameterError,
+    UnexpectedAuthenticationError,
+    FileWriteError,
+    UnexpectedError
+)
 
 
 class SpotifyAPI:
@@ -10,8 +19,9 @@ class SpotifyAPI:
         self.client_secret=client_secret
         self.redirect_uri=redirect_uri
         self.sp = None
+        self.pagination_limit = 50
 
-    def authorize_client(self, scope: str) -> None:
+    def connect(self, scope: str) -> bool:
         try:
             self.sp = spotipy.Spotify(
                 auth_manager=SpotifyOAuth(
@@ -22,51 +32,72 @@ class SpotifyAPI:
                 )
             )
             print("User authenticated successfully.")
-            return None
+            return True
         except spotipy.SpotifyOauthError as e:
-            print(f"OAuth authentication error: {e}")
+            raise AuthenticationError(f"OAuth authentication error: {e}") from e
         except spotipy.SpotifyException as e:
-            print(f"Spotify API error: {e}")
+            raise SpotifyAPIError(f"Spotify API error: {e}") from e
         except ValueError as e:
-            print(f"Invalid parameter error: {e}")
+            raise InvalidParameterError(f"Invalid parameter error: {e}") from e
         except Exception as e:
-            print(f"Unexpected error during authentication: {e}")
+            raise(f"Unexpected error during authentication: {e}") from e
+
+    def calculate_total_albums(self) -> int:
+        total_albums = 0
+        offset = 0
+        limit = self.pagination_limit
+        
+        print("Calculate total number of saved albums...")
+        # Paginate through all saved albums
+        while True:
+            results = self.sp.current_user_saved_albums(limit=limit, offset=offset)
+            # add the number of albums in the current page to the total
+            total_albums += len(results['items'])
+
+            # check if there are no more tracks (items) in the page
+            if not results['items']:
+                break
+
+            # update the offset
+            offset += limit
+
+        return total_albums
 
     
     def fetch_all_albums(self, csv_filepath: str) -> None:
-        play_lists = []
-        offset = 0
-        # loop over all current user playlists
-        while True:
-            current_user_playlists = self.sp.current_user_playlists(limit=50, offset=offset)
-            playlists = current_user_playlists['items']
-            # exit the loop if no playlists are found
-            if not playlists:
-                break
-            # loop over playlists
-            for playlist in playlists:
-                play_lists.append(
-                    {
-                        'Playlist Name': playlist['name'],
-                        'Playlist ID': playlist['id']
-                    }
-                )
-            # increment
-            offset += 50
 
-        # All playlists info into a pandas dataframe
-        df = pd.DataFrame(play_lists)
+        total_albums = self.calculate_total_albums()
+        albums = []
+        offset = 0
+        limit = self.pagination_limit
+        with tqdm(total=total_albums, desc='Fetching all albums') as pbar:
+            while True:
+                results = self.sp.current_user_saved_albums(limit=limit, offset=offset)
+                if not results['items']:
+                    break
+                for item in results['items']:
+                    album = item['album']
+                    albums.append({
+                        'Album Name': album['name'],
+                        'Artists': ", ".join(artist['name'] for artist in album['artists']),
+                        'Release Date': album['release_date'],
+                        'Popularity': album['popularity'],
+                        'Image URL': album['images'][0]['url']
+                    })
+                
+                # Update offset and progress bar
+                offset += limit
+                pbar.update(len(results['items']))
 
         # Save dataframe into a CSV
+        df = pd.DataFrame(albums)
         try:
             df.to_csv(csv_filepath, index=False)
             print(f"All Albums dataFrame successfully saved in {csv_filepath}.")
         except IOError:
             print("ERROR: Unable to write to the CSV file.")
         except Exception as e:
-            print("An unexpected error occured: {e}")
-
-        return None
+            print(f"An unexpected error occured while writing the CSV: {e}")
 
 
     # def fetch_tracks_from_playlist(self):
