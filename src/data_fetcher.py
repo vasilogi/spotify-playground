@@ -2,48 +2,21 @@ from typing import List, Dict, Any
 import pandas as pd
 from tqdm import tqdm
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
 
 # Custom modules
 from .exceptions import (
     SpotifyAPIError,
-    AuthenticationError,
-    InvalidParameterError,
-    UnexpectedAuthenticationError,
     FileWriteError,
     UnexpectedError
 )
 
 
-class SpotifyAPI:
+class DataFetcher:
 
-    def __init__(self, client_id: str, client_secret: str, redirect_uri: str):
-        self.client_id: str = client_id
-        self.client_secret: str = client_secret
-        self.redirect_uri: str = redirect_uri
-        self.sp: spotipy.Spotify | None = None
+    def __init__(self, spotify_client: spotipy.Spotify):
+        self.sp: spotipy.Spotify = spotify_client
         self.pagination_limit: int = 50
 
-    def connect(self, scope: str) -> bool:
-        try:
-            self.sp = spotipy.Spotify(
-                auth_manager=SpotifyOAuth(
-                    client_id=self.client_id,
-                    client_secret=self.client_secret,
-                    redirect_uri=self.redirect_uri,
-                    scope=scope
-                )
-            )
-            print("User authenticated successfully.")
-            return True
-        except spotipy.SpotifyOauthError as e:
-            raise AuthenticationError(f"OAuth authentication error: {e}") from e
-        except spotipy.SpotifyException as e:
-            raise SpotifyAPIError(f"Spotify API error: {e}") from e
-        except ValueError as e:
-            raise InvalidParameterError(f"Invalid parameter error: {e}") from e
-        except Exception as e:
-            raise UnexpectedAuthenticationError(f"Unexpected error during authentication: {e}") from e
 
     def calculate_total_albums(self) -> int:
         

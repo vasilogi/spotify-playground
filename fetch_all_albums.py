@@ -5,7 +5,8 @@ import time
 import os
 
 # Custom modules
-from src.spotify_handler import SpotifyAPI
+from src.data_fetcher import DataFetcher
+from src.spotify_client import SpotifyClient
 
 def main():
     # get current workind directory
@@ -20,18 +21,23 @@ def main():
     redirect_uri=os.environ.get('REDIRECT_URI')
     scope = "user-library-read"
 
-    spotify = SpotifyAPI(
+    # Instantiate Spotify Client
+    spotify_client = SpotifyClient(
         client_id=client_id,
         client_secret=client_secret,
         redirect_uri=redirect_uri,
+        scope=scope
     )
 
     # Authorize Spotify Client
-    spotify.connect(scope=scope)
+    client = spotify_client.create_spotify_client()
+
+    # Instantiate Data Fetcher
+    data_fetcher = DataFetcher(client)
 
     # Get all albums
     csv_filepath = cwd / "all_albums.csv"
-    spotify.fetch_all_albums(csv_filepath=csv_filepath)
+    data_fetcher.fetch_all_albums(csv_filepath=csv_filepath)
 
 if __name__ == '__main__':
     main()
