@@ -2,6 +2,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import pandas as pd
 from tqdm import tqdm
+from typing import List, Dict, Any
 from .exceptions import (
     SpotifyAPIError,
     AuthenticationError,
@@ -15,11 +16,11 @@ from .exceptions import (
 class SpotifyAPI:
 
     def __init__(self, client_id: str, client_secret: str, redirect_uri: str):
-        self.client_id=client_id
-        self.client_secret=client_secret
-        self.redirect_uri=redirect_uri
-        self.sp = None
-        self.pagination_limit = 50
+        self.client_id: str = client_id
+        self.client_secret: str = client_secret
+        self.redirect_uri: str = redirect_uri
+        self.sp: spotipy.Spotify | None = None
+        self.pagination_limit: int = 50
 
     def connect(self, scope: str) -> bool:
         try:
@@ -40,17 +41,17 @@ class SpotifyAPI:
         except ValueError as e:
             raise InvalidParameterError(f"Invalid parameter error: {e}") from e
         except Exception as e:
-            raise(f"Unexpected error during authentication: {e}") from e
+            raise UnexpectedAuthenticationError(f"Unexpected error during authentication: {e}") from e
 
     def calculate_total_albums(self) -> int:
-        total_albums = 0
-        offset = 0
-        limit = self.pagination_limit
+        total_albums: int = 0
+        offset: int = 0
+        limit: int = self.pagination_limit
         
         print("Calculate total number of saved albums...")
         # Paginate through all saved albums
         while True:
-            results = self.sp.current_user_saved_albums(limit=limit, offset=offset)
+            results: Dict[str, Any] = self.sp.current_user_saved_albums(limit=limit, offset=offset)
             # add the number of albums in the current page to the total
             total_albums += len(results['items'])
 
@@ -66,20 +67,20 @@ class SpotifyAPI:
     
     def fetch_all_albums(self, csv_filepath: str) -> None:
 
-        total_albums = self.calculate_total_albums()
-        albums = []
-        offset = 0
-        limit = self.pagination_limit
+        total_albums: int = self.calculate_total_albums()
+        albums: List[Dict[str, Any]] = []
+        offset: int = 0
+        limit: int = self.pagination_limit
         with tqdm(total=total_albums, desc='Fetching all albums') as pbar:
             while True:
                 try:
-                    results = self.sp.current_user_saved_albums(limit=limit, offset=offset)
+                    results: Dict[str, Any] = self.sp.current_user_saved_albums(limit=limit, offset=offset)
                 except spotipy.SpotifyException as e:
                     raise SpotifyAPIError(f"Failed to fetch albums: {e}") from e
                 if not results['items']:
                     break
                 for item in results['items']:
-                    album = item['album']
+                    album: Dict[str, Any] = item['album']
                     albums.append({
                         'Album Name': album['name'],
                         'Artists': ", ".join(artist['name'] for artist in album['artists']),
@@ -93,7 +94,7 @@ class SpotifyAPI:
                 pbar.update(len(results['items']))
 
         # Save dataframe into a CSV
-        df = pd.DataFrame(albums)
+        df: pd.DataFrame = pd.DataFrame(albums)
         try:
             df.to_csv(csv_filepath, index=False)
             print(f"All Albums dataFrame successfully saved in {csv_filepath}.")
