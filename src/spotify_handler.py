@@ -72,7 +72,10 @@ class SpotifyAPI:
         limit = self.pagination_limit
         with tqdm(total=total_albums, desc='Fetching all albums') as pbar:
             while True:
-                results = self.sp.current_user_saved_albums(limit=limit, offset=offset)
+                try:
+                    results = self.sp.current_user_saved_albums(limit=limit, offset=offset)
+                except spotipy.SpotifyException as e:
+                    raise SpotifyAPIError(f"Failed to fetch albums: {e}") from e
                 if not results['items']:
                     break
                 for item in results['items']:
@@ -94,10 +97,10 @@ class SpotifyAPI:
         try:
             df.to_csv(csv_filepath, index=False)
             print(f"All Albums dataFrame successfully saved in {csv_filepath}.")
-        except IOError:
-            print("ERROR: Unable to write to the CSV file.")
+        except IOError as e:
+            raise FileWriteError("Unable to write to the CSV file: {e}") from e
         except Exception as e:
-            print(f"An unexpected error occured while writing the CSV: {e}")
+            raise UnexpectedError(f"An unexpected error occured while writing the CSV: {e}") from e
 
 
     # def fetch_tracks_from_playlist(self):
