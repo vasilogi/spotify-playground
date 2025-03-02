@@ -1,8 +1,10 @@
-import spotipy
-from spotipy.oauth2 import SpotifyOAuth
+from typing import List, Dict, Any
 import pandas as pd
 from tqdm import tqdm
-from typing import List, Dict, Any
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+
+# Custom modules
 from .exceptions import (
     SpotifyAPIError,
     AuthenticationError,
@@ -44,25 +46,15 @@ class SpotifyAPI:
             raise UnexpectedAuthenticationError(f"Unexpected error during authentication: {e}") from e
 
     def calculate_total_albums(self) -> int:
-        total_albums: int = 0
-        offset: int = 0
-        limit: int = self.pagination_limit
         
-        print("Calculate total number of saved albums...")
-        # Paginate through all saved albums
-        while True:
-            results: Dict[str, Any] = self.sp.current_user_saved_albums(limit=limit, offset=offset)
-            # add the number of albums in the current page to the total
-            total_albums += len(results['items'])
-
-            # check if there are no more tracks (items) in the page
-            if not results['items']:
-                break
-
-            # update the offset
-            offset += limit
-
-        return total_albums
+        limit: int = 1
+        
+        try:
+            results: Dict[str, Any] = self.sp.current_user_saved_albums(limit=limit)
+        except spotipy.SpotifyException as e:
+            raise SpotifyAPIError(f"Failed to fetch albums: {e}") from e
+        
+        return results['total']
 
     
     def fetch_all_albums(self, csv_filepath: str) -> None:
