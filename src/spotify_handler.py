@@ -5,13 +5,13 @@ import pandas as pd
 
 class SpotifyAPI:
 
-    def __init__(self, client_id, client_secret, redirect_uri):
+    def __init__(self, client_id: str, client_secret: str, redirect_uri: str):
         self.client_id=client_id
         self.client_secret=client_secret
         self.redirect_uri=redirect_uri
         self.sp = None
 
-    def spotify_client(self, scope: str) -> None:
+    def authorize_client(self, scope: str) -> None:
         try:
             self.sp = spotipy.Spotify(
                 auth_manager=SpotifyOAuth(
