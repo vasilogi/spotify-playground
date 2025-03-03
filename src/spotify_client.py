@@ -1,7 +1,9 @@
-import spotipy
-from spotipy.oauth2 import SpotifyOAuth
+import logging
 from types import TracebackType
 from typing import Optional, Type
+
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
 
 # Custom modules
 from .exceptions import (
@@ -12,6 +14,7 @@ from .exceptions import (
 )
 
 class SpotifyClient:
+    """A client for interacting with the Spotify API."""
 
     def __init__(
             self,
@@ -20,25 +23,45 @@ class SpotifyClient:
             redirect_uri: str,
             scope: str
     ):
+        """
+        Initialize the SpotifyClient.
+
+        :param client_id: Spotify API client ID
+        :param client_secret: Spotify API client secret
+        :param redirect_uri: Redirect URI for OAuth flow
+        :param scope: Spotify API scope (default: "user-library-read")
+        """
         self.client_id: str = client_id
         self.client_secret: str = client_secret
         self.redirect_uri: str = redirect_uri
         self.scope: str = scope
-        self.client: Optional[spotipy.Spotify] = None
+        self._client: Optional[spotipy.Spotify] = None
 
     def __enter__(self) -> spotipy.Spotify:
-        return self.create_spotify_client()
+        """Enter the runtime context and return the Spotify client."""
+        return self.client
     
     def __exit__(
         self,
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType]
-    ) -> None:
-        if self.client:
+    ) -> bool:
+        try:
             self.close()
+        except Exception as e:
+            logging.error(f"Error during SpotifyClient cleanup: {e}")
+        return False # Propagate exceptions
+    
+    @property
+    def client(self) -> spotipy.Spotify:
+        """Lazy initialization of the Spotify client."""
+        if self._client is None:
+            self._client = self.create_spotify_client()
+        return self._client
 
     def create_spotify_client(self) -> spotipy.Spotify:
+        """Create and return a new Spotify client."""
         try:
             auth_manager=SpotifyOAuth(
                 client_id=self.client_id,
@@ -46,8 +69,7 @@ class SpotifyClient:
                 redirect_uri=self.redirect_uri,
                 scope=self.scope
             )
-            self.client = spotipy.Spotify(auth_manager=auth_manager)
-            return self.client
+            return spotipy.Spotify(auth_manager=auth_manager)
         except spotipy.SpotifyOauthError as e:
             raise AuthenticationError(f"OAuth authentication error: {e}") from e
         except spotipy.SpotifyException as e:
@@ -58,7 +80,7 @@ class SpotifyClient:
             raise UnexpectedAuthenticationError(f"Unexpected error during authentication: {e}") from e
         
     def close(self) -> None:
-        if self.client:
-            # Clear the token
-            self.client.auth_manager.token_info = None
-            self.client = None
+        """Close the Spotify client and clear authentication."""
+        if self._client:
+            self._client.auth_manager.token_info = None
+            self._client = None
