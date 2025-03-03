@@ -22,22 +22,18 @@ def main():
     scope = "user-library-read"
 
     # Instantiate Spotify Client
-    spotify_client = SpotifyClient(
+    with SpotifyClient(
         client_id=client_id,
         client_secret=client_secret,
         redirect_uri=redirect_uri,
         scope=scope
-    )
+    ) as client:
+        # Instantiate Data Fetcher
+        data_fetcher = DataFetcher(client)
 
-    # Authorize Spotify Client
-    client = spotify_client.create_spotify_client()
-
-    # Instantiate Data Fetcher
-    data_fetcher = DataFetcher(client)
-
-    # Get all albums
-    csv_filepath = cwd / "all_albums.csv"
-    data_fetcher.fetch_all_albums(csv_filepath=csv_filepath)
+        # Get all albums
+        csv_filepath = cwd / "all_albums.csv"
+        data_fetcher.fetch_all_albums(csv_filepath=csv_filepath)
 
 if __name__ == '__main__':
     main()
