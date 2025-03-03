@@ -36,6 +36,8 @@ class SpotifyClient:
         self.redirect_uri: str = redirect_uri
         self.scope: str = scope
         self._client: Optional[spotipy.Spotify] = None
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(logging.INFO)
 
     def __enter__(self) -> spotipy.Spotify:
         """Enter the runtime context and return the Spotify client."""
@@ -50,7 +52,7 @@ class SpotifyClient:
         try:
             self.close()
         except Exception as e:
-            logging.error(f"Error during SpotifyClient cleanup: {e}")
+            self.logger.error(f"Error during SpotifyClient cleanup: {e}")
         return False # Propagate exceptions
     
     @property
@@ -82,5 +84,6 @@ class SpotifyClient:
     def close(self) -> None:
         """Close the Spotify client and clear authentication."""
         if self._client:
+            self.logger.info("Closing Spotify client and clearing authentication")
             self._client.auth_manager.token_info = None
             self._client = None
