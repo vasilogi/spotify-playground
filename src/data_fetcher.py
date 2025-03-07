@@ -2,6 +2,7 @@ from typing import List, Dict, Any
 import pandas as pd
 from tqdm import tqdm
 import spotipy
+import time
 
 # Custom modules
 from .exceptions import (
@@ -39,6 +40,15 @@ class DataFetcher:
             raise SpotifyAPIError(f"Failed to fetch playlists: {e}") from e
         
         return results['total']
+    
+    def calculate_total_tracks(self, playlist_id: str) -> int:
+        
+        limit: int = 1
+        try:
+            playlist_info: Dict[str, Any] = self.sp.playlist(playlist_id, limit=limit)
+            return playlist_info['tracks']['total'] 
+        except spotipy.SpotifyException as e:
+            raise SpotifyAPIError(f"Failed to fetch tracks from a playlist: {e}") from e
 
     
     def fetch_all_albums(self, csv_filepath: str) -> None:
@@ -119,6 +129,62 @@ class DataFetcher:
                     f"An unexpected error occured while writing all playlists to the CSV: {e}"
                 ) from e
 
+    def fetch_tracks_from_playlist(self, playlist_id: str, csv_filepath: str) -> None:
+        total_tracks: int = self.calculate_total_tracks(playlist_id=playlist_id)
+        tracks: List[Dict[str, Any]] = []
+        offset: int = 0
+        limit: int = self.pagination_limit
+        
+        with tqdm(total=total_tracks, desc='Fetching all tracks from a playlist') as pbar:
+            # loop over all current user playlists
+            while True:
+                try:
+                    # get the playlist tracks object
+                    playlist_tracks: Dict[str, Any] = self.sp.playlist_tracks(
+                        playlist_id= playlist_id,
+                        limit=limit,
+                        offset=offset
+                    )
+                    # get playlist items
+                    playlist_items: Dict[str, Any] = playlist_tracks['items']
+                    # Exit if no playlist items exist
+                    if len(playlist_items) == 0:
+                        break
+                    # Process each track
+                    for item in playlist_items:
+                        # check if track exists
+                        if item['track'] is not None:
+                            track = item['track']
+                            tracks.append(
+                                {
+                                    'Track ID':track['id'],
+                                    'Track Name': track['name'],
+                                    'Track Popularity': track['popularity'],
+                                    'Track Duration': track['duration_ms'],
+                                    'Track Album Name': track['album']['name'],
+                                    'Track Artists': ", ".join(artist['name'] for artist in track['artists'])
+                                }
+                            )
+                    # Update progress and offset
+                    offset+=limit
+                    pbar.update(len(playlist_items))
 
-    # def fetch_tracks_from_playlist(self):
-    #     pass
+                    # Avoid rate limiting with a small pause
+                    time.sleep(0.5)
+                except Exception as e:
+                    print(f"Error occured while trying to fetch playlists tracks: {e}")
+                    print("Attempting to reconnect in 3 seconds...")
+                    time.sleep(3)
+                    continue
+
+        # Save dataframe into a CSV
+        df: pd.DataFrame = pd.DataFrame(tracks)
+        try:
+            df.to_csv(csv_filepath, index=False)
+            print(f"All tracks dataFrame successfully saved in {csv_filepath}.")
+        except IOError as e:
+            raise FileWriteError("Unable to write all tracks to the CSV file: {e}") from e
+        except Exception as e:
+            raise UnexpectedError(
+                f"An unexpected error occured while writing all tracks to the CSV: {e}"
+            ) from e
