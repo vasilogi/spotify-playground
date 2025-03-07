@@ -1,25 +1,40 @@
-from dotenv import load_dotenv
+# Standard Imports
 from pathlib import Path
 import argparse
-import time
 import os
+
+# Third-party
+from dotenv import load_dotenv
 
 # Custom modules
 from src.data_fetcher import DataFetcher
 from src.spotify_client import SpotifyClient
 
-def main():
-    # get current workind directory
-    cwd = Path.cwd()
+def arg_parser():
+    """Function to parse arguments from terminal"""
+    parser = argparse.ArgumentParser(description='Script to get all stored albums')
+    parser.add_argument("--scope", type=str, dest='app_scope', default='user-library-read')
+    parser.add_argument(
+        "--output-csv-path",
+        type=Path,
+        dest='output_path',
+        default='./all_albums.csv'
+    )
+    return parser.parse_args()
 
+def main():
+    """Main program"""
     # Load variables from .env file
     load_dotenv()
+
+    # Define arguments
+    args = arg_parser()
 
     # Get Spotify application's credentials
     client_id=os.environ.get('CLIENT_ID')
     client_secret=os.environ.get('CLIENT_SECRET')
     redirect_uri=os.environ.get('REDIRECT_URI')
-    scope = "user-library-read"
+    scope = args.app_scope
 
     # Instantiate Spotify Client
     with SpotifyClient(
@@ -31,9 +46,8 @@ def main():
         # Instantiate Data Fetcher
         data_fetcher = DataFetcher(client)
 
-        # Get all albums
-        csv_filepath = cwd / "all_albums.csv"
-        data_fetcher.fetch_all_albums(csv_filepath=csv_filepath)
+        # Get all data
+        data_fetcher.fetch_all_albums(csv_filepath=args.output_path)
 
 if __name__ == '__main__':
     main()
