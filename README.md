@@ -8,3 +8,4 @@ scopes
 
 'user-library-read' for fetching all albums
 'playlist-read-private' for fetching all playlists
+'playlist-read-private' for fetching tracks from playlists

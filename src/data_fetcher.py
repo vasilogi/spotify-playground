@@ -43,10 +43,9 @@ class DataFetcher:
     
     def calculate_total_tracks(self, playlist_id: str) -> int:
         
-        limit: int = 1
         try:
-            playlist_info: Dict[str, Any] = self.sp.playlist(playlist_id, limit=limit)
-            return playlist_info['tracks']['total'] 
+            playlist_info: Dict[str, Any] = self.sp.playlist(playlist_id)
+            return playlist_info['tracks']['total']
         except spotipy.SpotifyException as e:
             raise SpotifyAPIError(f"Failed to fetch tracks from a playlist: {e}") from e
 
