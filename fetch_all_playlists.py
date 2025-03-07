@@ -13,12 +13,12 @@ from src.spotify_client import SpotifyClient
 def arg_parser():
     """Function to parse arguments from terminal"""
     parser = argparse.ArgumentParser(description='Script to get all stored albums')
-    parser.add_argument("--scope", type=str, dest='app_scope', default='user-library-read')
+    parser.add_argument("--scope", type=str, dest='app_scope', default='playlist-read-private')
     parser.add_argument(
         "--output-csv-path",
         type=Path,
         dest='output_path',
-        default='./all_albums.csv'
+        default='./all_playlists.csv'
     )
     return parser.parse_args()
 
@@ -47,7 +47,7 @@ def main():
         data_fetcher = DataFetcher(client)
 
         # Get all data
-        data_fetcher.fetch_all_albums(csv_filepath=args.output_path)
+        data_fetcher.fetch_all_playlists(csv_filepath=args.output_path)
 
 if __name__ == '__main__':
     main()
