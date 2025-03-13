@@ -47,7 +47,7 @@ def main():
         data_fetcher = DataFetcher(client)
 
         # Get all data
-        data_fetcher.fetch_tracks_from_playlist(playlist_id=args.playlist_id, csv_filepath=args.output_filepath)
+        data_fetcher.fetch_tracks_from_playlist(playlist_id=args.playlist_id, csv_filepath=args.output_filepath, pagination_limit=50)
 
 if __name__ == '__main__':
     main()

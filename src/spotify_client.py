@@ -42,7 +42,7 @@ class SpotifyClient:
     def __enter__(self) -> spotipy.Spotify:
         """Enter the runtime context and return the Spotify client."""
         return self.client
-    
+
     def __exit__(
         self,
         exc_type: Optional[Type[BaseException]],
@@ -54,7 +54,7 @@ class SpotifyClient:
         except Exception as e:
             self.logger.error(f"Error during SpotifyClient cleanup: {e}")
         return False # Propagate exceptions
-    
+
     @property
     def client(self) -> spotipy.Spotify:
         """Lazy initialization of the Spotify client."""
@@ -79,8 +79,10 @@ class SpotifyClient:
         except ValueError as e:
             raise InvalidParameterError(f"Invalid parameter error: {e}") from e
         except Exception as e:
-            raise UnexpectedAuthenticationError(f"Unexpected error during authentication: {e}") from e
-        
+            raise UnexpectedAuthenticationError(
+                f"Unexpected error during authentication: {e}"
+            ) from e
+
     def close(self) -> None:
         """Close the Spotify client and clear authentication."""
         if self._client:
