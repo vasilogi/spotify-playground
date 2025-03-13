@@ -52,7 +52,7 @@ class SpotifyClient:
         try:
             self.close()
         except Exception as e:
-            self.logger.error(f"Error during SpotifyClient cleanup: {e}")
+            self.logger.error("Error during SpotifyClient cleanup: %s", e)
         return False # Propagate exceptions
 
     @property
