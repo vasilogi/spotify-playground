@@ -138,13 +138,15 @@ class DataFetcher:
                     break
                 for item in results['items']:
                     album: Dict[str, Any] = item['album']
-                    albums.append({
+                    albums.append(
+                        {
                         'Album Name': album['name'],
                         'Artists': ", ".join(artist['name'] for artist in album['artists']),
                         'Release Date': album['release_date'],
                         'Popularity': album['popularity'],
                         'Image URL': album['images'][0]['url']
-                    })      
+                        }
+                    )
                 # Update offset and progress bar
                 offset += limit
                 pbar.update(len(results['items']))
