@@ -1,6 +1,3 @@
-# Standard imports
-import time
-
 # 3rd party packages
 from typing import List, Dict, Any
 import pandas as pd
@@ -228,63 +225,44 @@ class DataFetcher:
         with tqdm(total=total_tracks, desc='Fetching all tracks from a playlist') as pbar:
             # loop over all current user playlists (update offset)
             while True:
-                retry_counter: int = 0 # Reset counter for each new offset
-                # retry loop
-                while retry_counter <= self.max_retries:
-                    try:
-                        # get the playlist tracks object
-                        playlist_tracks: Dict[str, Any] = self.sp.playlist_tracks(
-                            playlist_id= playlist_id,
-                            limit=limit,
-                            offset=offset
-                        )
-                        # get playlist items
-                        playlist_items: Dict[str, Any] = playlist_tracks['items']
-                        # Exit if no playlist items exist
-                        if len(playlist_items) == 0:
-                            break
-                        # Process each track
-                        for item in playlist_items:
-                            # check if track exists
-                            if item['track'] is not None:
-                                track = item['track']
-                                tracks.append(
-                                    {
-                                        'Track ID':track['id'],
-                                        'Track Name': track['name'],
-                                        'Track Popularity': track['popularity'],
-                                        'Track Duration': track['duration_ms'],
-                                        'Track Album Name': track['album']['name'],
-                                        'Track Artists': ", ".join(artist['name'] for artist in track['artists'])
-                                    }
-                                )
-                        # Update progress and offset
-                        offset+=limit
-                        pbar.update(len(playlist_items))
-
-                        # Avoid rate limiting with a small pause
-                        time.sleep(0.5)
-
-                        # Break the retry loop when success
+                try:
+                    # get the playlist tracks object
+                    playlist_tracks: Dict[str, Any] = self.sp.playlist_tracks(
+                        playlist_id= playlist_id,
+                        limit=limit,
+                        offset=offset
+                    )
+                    # get playlist items
+                    playlist_items: Dict[str, Any] = playlist_tracks['items']
+                    # Exit if no playlist items exist
+                    if len(playlist_items) == 0:
                         break
-                    except spotipy.SpotifyException as e:
-                        if retry_counter < self.max_retries:
-                            retry_counter += 1
-                            print(f"Spotify API error while trying to fetch playlist tracks: {e}")
-                            print(f"Retrying {retry_counter}/{self.max_retries}...")
-                            time.sleep(3)
-                            continue
-                        raise SpotifyAPIError(
-                            f"Failed to fetch playlist tracks after {self.max_retries} attempts: {e}"
-                        ) from e
-                    except Exception as e:
-                        raise UnexpectedError(
-                            f"Unexpected error while fetching playlist tracks: {e}"
-                        ) from e
-                # If we've exhausted all retries without success,
-                # or if there are no more items, exit the main loop
-                if retry_counter > self.max_retries or len(playlist_items) == 0:
-                    break
+                    # Process each track
+                    for item in playlist_items:
+                        # check if track exists
+                        if item['track'] is not None:
+                            track = item['track']
+                            tracks.append(
+                                {
+                                    'Track ID':track['id'],
+                                    'Track Name': track['name'],
+                                    'Track Popularity': track['popularity'],
+                                    'Track Duration': track['duration_ms'],
+                                    'Track Album Name': track['album']['name'],
+                                    'Track Artists': ", ".join(artist['name'] for artist in track['artists'])
+                                }
+                            )
+                    # Update progress and offset
+                    offset+=limit
+                    pbar.update(len(playlist_items))
+                except spotipy.SpotifyException as e:
+                    raise SpotifyAPIError(
+                        f"Failed to fetch playlist tracks after {self.max_retries} attempts: {e}"
+                    ) from e
+                except Exception as e:
+                    raise UnexpectedError(
+                        f"Unexpected error while fetching playlist tracks: {e}"
+                    ) from e
 
         # Save dataframe into a CSV
         df: pd.DataFrame = pd.DataFrame(tracks)
