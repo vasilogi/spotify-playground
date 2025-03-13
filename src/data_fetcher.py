@@ -157,7 +157,7 @@ class DataFetcher:
             df.to_csv(csv_filepath, index=False)
             print(f"All Albums dataFrame successfully saved in {csv_filepath}.")
         except IOError as e:
-            raise FileWriteError("Unable to write to the CSV file: {e}") from e
+            raise FileWriteError(f"Unable to write to the CSV file: {e}") from e
         except Exception as e:
             raise UnexpectedError(f"An unexpected error occured while writing the CSV: {e}") from e
 
@@ -173,7 +173,7 @@ class DataFetcher:
         total_playlists: int = self.calculate_total_playlists()
         play_lists: List[Dict[str, Any]] = []
         offset: int = 0
-        limit: int = self.pagination_limit   
+        limit: int = self.pagination_limit
         with tqdm(total=total_playlists, desc='Fetching all playlists') as pbar:
             # loop over all current user playlists
             while True:
@@ -268,7 +268,7 @@ class DataFetcher:
                         # Break the retry loop when success
                         break
                     except spotipy.SpotifyException as e:
-                        if retry_counter <= self.max_retries:
+                        if retry_counter < self.max_retries:
                             retry_counter += 1
                             print(f"Spotify API error while trying to fetch playlist tracks: {e}")
                             print(f"Retrying {retry_counter}/{self.max_retries}...")
