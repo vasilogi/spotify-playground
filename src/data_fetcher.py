@@ -340,7 +340,7 @@ class DataFetcher:
                     for item in playlist_items:
                         # check if track exists
                         if item['track'] is not None:
-                            track = item['track']
+                            track: Dict[str, Any] = item['track']
                             tracks.append(
                                 {
                                     'Track ID':track['id'],
