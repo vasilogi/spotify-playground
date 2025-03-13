@@ -39,12 +39,7 @@ class DataFetcher:
         Fetches all tracks from a given playlist and saves them to a CSV file.
     """
 
-    def __init__(
-            self,
-            spotify_client: spotipy.Spotify,
-            pagination_limit: int = 50,
-            max_retries: int = 3
-    ):
+    def __init__(self, spotify_client: spotipy.Spotify):
         """
         Initializes the DataFetcher with an authenticated Spotipy client.
 
@@ -54,10 +49,8 @@ class DataFetcher:
             An authenticated Spotipy client instance.
         """
         self.sp: spotipy.Spotify = spotify_client
-        # TODO: add pagination limit to the methods
-        self.pagination_limit: int = pagination_limit
-        self.max_retries: int = max_retries
 
+        
     def calculate_total_albums(self) -> int:
         """
         Calculates the total number of saved albums for the current user.
@@ -122,7 +115,7 @@ class DataFetcher:
                 f"Unexpected error occured - calculate_total tracks: {e}"
             ) from e
 
-    def fetch_all_albums(self, csv_filepath: str) -> None:
+    def fetch_all_albums(self, csv_filepath: str, pagination_limit: int = 50) -> None:
         """
         Fetches all saved albums for the current user and saves them to a CSV file.
 
@@ -134,12 +127,11 @@ class DataFetcher:
         total_albums: int = self.calculate_total_albums()
         albums: List[Dict[str, Any]] = []
         offset: int = 0
-        limit: int = self.pagination_limit
         with tqdm(total=total_albums, desc='Fetching all albums') as pbar:
             while True:
                 try:
                     results: Dict[str, Any] = self.sp.current_user_saved_albums(
-                        limit=limit,
+                        limit=pagination_limit,
                         offset=offset
                     )
                     if not results['items']:
@@ -156,7 +148,7 @@ class DataFetcher:
                             }
                         )
                     # Update offset and progress bar
-                    offset += limit
+                    offset += pagination_limit
                     pbar.update(len(results['items']))
                 except spotipy.SpotifyException as e:
                     raise SpotifyAPIError(f"Failed to fetch albums - fetch_all_albums: {e}") from e
@@ -175,7 +167,7 @@ class DataFetcher:
         except Exception as e:
             raise UnexpectedError(f"An unexpected error occured while writing the CSV: {e}") from e
 
-    def fetch_all_playlists(self, csv_filepath: str) -> None:
+    def fetch_all_playlists(self, csv_filepath: str, pagination_limit: int = 50) -> None:
         """
         Fetches all playlists for the current user and saves them to a CSV file.
 
@@ -187,13 +179,12 @@ class DataFetcher:
         total_playlists: int = self.calculate_total_playlists()
         play_lists: List[Dict[str, Any]] = []
         offset: int = 0
-        limit: int = self.pagination_limit
         with tqdm(total=total_playlists, desc='Fetching all playlists') as pbar:
             # loop over all current user playlists
             while True:
                 try:
                     current_user_playlists: Dict[str, Any] = self.sp.current_user_playlists(
-                        limit=limit,
+                        limit=pagination_limit,
                         offset=offset
                     )
                     playlists: Dict[str, Any] = current_user_playlists['items']
@@ -210,7 +201,7 @@ class DataFetcher:
                         )
 
                     # Update offset and progress bar
-                    offset += limit
+                    offset += pagination_limit
                     pbar.update(len(current_user_playlists['items']))
                 except spotipy.SpotifyException as e:
                     raise SpotifyAPIError(
@@ -233,7 +224,12 @@ class DataFetcher:
                     f"An unexpected error occured while writing all playlists to the CSV: {e}"
                 ) from e
 
-    def fetch_tracks_from_playlist(self, playlist_id: str, csv_filepath: str) -> None:
+    def fetch_tracks_from_playlist(
+            self,
+            playlist_id: str,
+            csv_filepath: str,
+            pagination_limit: int = 50
+    ) -> None:
         """
         Fetches all tracks from a given playlist and saves them to a CSV file.
 
@@ -247,7 +243,6 @@ class DataFetcher:
         total_tracks: int = self.calculate_total_tracks(playlist_id=playlist_id)
         tracks: List[Dict[str, Any]] = []
         offset: int = 0
-        limit: int = self.pagination_limit
         with tqdm(total=total_tracks, desc='Fetching all tracks from a playlist') as pbar:
             # loop over all current user playlists (update offset)
             while True:
@@ -255,7 +250,7 @@ class DataFetcher:
                     # get the playlist tracks object
                     playlist_tracks: Dict[str, Any] = self.sp.playlist_tracks(
                         playlist_id= playlist_id,
-                        limit=limit,
+                        limit=pagination_limit,
                         offset=offset
                     )
                     # get playlist items
@@ -279,7 +274,7 @@ class DataFetcher:
                                 }
                             )
                     # Update progress and offset
-                    offset+=limit
+                    offset+=pagination_limit
                     pbar.update(len(playlist_items))
                 except spotipy.SpotifyException as e:
                     raise SpotifyAPIError(
