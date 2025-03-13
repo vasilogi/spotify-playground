@@ -51,6 +51,13 @@ class DataFetcher:
         -------
         int
             The total number of saved albums.
+
+        Raises:
+        ------
+        SpotifyAPIError
+            If there's an error communicating with the Spotify API.
+        UnexpectedError
+            If an unexpected error occurs.
         """
         limit: int = 1
         try:
@@ -69,6 +76,13 @@ class DataFetcher:
         -------
         int
             The total number of playlists.
+
+        Raises:
+        ------
+        SpotifyAPIError
+            If there's an error communicating with the Spotify API.
+        UnexpectedError
+            If an unexpected error occurs.
         """
         limit: int = 1
         try:
