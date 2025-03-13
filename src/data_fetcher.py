@@ -356,7 +356,7 @@ class DataFetcher:
                     pbar.update(len(playlist_items))
                 except spotipy.SpotifyException as e:
                     raise SpotifyAPIError(
-                        f"Failed to fetch playlist tracks after {self.max_retries} attempts: {e}"
+                        f"Failed to fetch playlist tracks - fetch_tracks_from_playlist: {e}"
                     ) from e
                 except Exception as e:
                     raise UnexpectedError(
