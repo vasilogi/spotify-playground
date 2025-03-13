@@ -1,8 +1,11 @@
+# Standard imports
+import time
+
+# 3rd party packages
 from typing import List, Dict, Any
 import pandas as pd
 from tqdm import tqdm
 import spotipy
-import time
 
 # Custom modules
 from .exceptions import (
@@ -13,6 +16,31 @@ from .exceptions import (
 
 
 class DataFetcher:
+    """
+    A class to fetch data from Spotify using the Spotipy library.
+
+    Attributes:
+    ----------
+    sp : spotipy.Spotify
+        An authenticated Spotipy client instance.
+    pagination_limit : int
+        The number of items to fetch per request (default is 50).
+
+    Methods:
+    -------
+    calculate_total_albums() -> int:
+        Calculates the total number of saved albums for the current user.
+    calculate_total_playlists() -> int:
+        Calculates the total number of playlists for the current user.
+    calculate_total_tracks(playlist_id: str) -> int:
+        Calculates the total number of tracks in a given playlist.
+    fetch_all_albums(csv_filepath: str) -> None:
+        Fetches all saved albums for the current user and saves them to a CSV file.
+    fetch_all_playlists(csv_filepath: str) -> None:
+        Fetches all playlists for the current user and saves them to a CSV file.
+    fetch_tracks_from_playlist(playlist_id: str, csv_filepath: str) -> None:
+        Fetches all tracks from a given playlist and saves them to a CSV file.
+    """
 
     def __init__(self, spotify_client: spotipy.Spotify):
         self.sp: spotipy.Spotify = spotify_client
