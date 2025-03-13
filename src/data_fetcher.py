@@ -292,6 +292,31 @@ class DataFetcher:
             The ID of the playlist.
         csv_filepath : str
             The file path where the CSV file will be saved.
+        pagination_limit : int, optional
+            Number of items to retrieve per API call (default is 50).
+
+        Raises:
+        ------
+        SpotifyAPIError
+            If there's an error communicating with the Spotify API.
+        FileWriteError
+            If there's an error writing to the CSV file.
+        UnexpectedError
+            If an unexpected error occurs.
+
+        Examples:
+        --------
+        >>> fetcher = DataFetcher(sp)
+        >>> # Fetch tracks from a specific playlist
+        >>> playlist_id = '37i9dQZEVXcQ9COmYvdajy'  # Example playlist ID
+        >>> fetcher.fetch_tracks_from_playlist(playlist_id, 'playlist_tracks.csv')
+        >>> 
+        >>> # Use a custom pagination limit
+        >>> fetcher.fetch_tracks_from_playlist(
+        ...     '37i9dQZEVXcQ9COmYvdajy',
+        ...     'playlist_tracks.csv',
+        ...     pagination_limit=25
+        ... )
         """
         total_tracks: int = self.calculate_total_tracks(playlist_id=playlist_id)
         tracks: List[Dict[str, Any]] = []
