@@ -110,6 +110,13 @@ class DataFetcher:
         -------
         int
             The total number of tracks in the playlist.
+
+        Raises:
+        ------
+        SpotifyAPIError
+            If there's an error communicating with the Spotify API.
+        UnexpectedError
+            If an unexpected error occurs.
         """
         try:
             playlist_info: Dict[str, Any] = self.sp.playlist(playlist_id)
