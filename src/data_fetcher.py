@@ -136,6 +136,26 @@ class DataFetcher:
         ----------
         csv_filepath : str
             The file path where the CSV file will be saved.
+        pagination_limit : int, optional
+            Number of items to retrieve per API call (default is 50).
+
+        Raises:
+        ------
+        SpotifyAPIError
+            If there's an error communicating with the Spotify API.
+        FileWriteError
+            If there's an error writing to the CSV file.
+        UnexpectedError
+            If an unexpected error occurs.
+
+        Examples:
+        --------
+        >>> fetcher = DataFetcher(sp)
+        >>> # Standard usage
+        >>> fetcher.fetch_all_albums('my_albums.csv')
+        >>> 
+        >>> # With custom pagination limit
+        >>> fetcher.fetch_all_albums('my_albums.csv', pagination_limit=20)
         """
         total_albums: int = self.calculate_total_albums()
         albums: List[Dict[str, Any]] = []
