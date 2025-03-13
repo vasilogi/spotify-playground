@@ -42,7 +42,7 @@ class DataFetcher:
             An authenticated Spotipy client instance.
         """
         self.sp: spotipy.Spotify = spotify_client
-   
+
     def calculate_total_albums(self) -> int:
         """
         Calculates the total number of saved albums for the current user.
