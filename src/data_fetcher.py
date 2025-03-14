@@ -20,16 +20,18 @@ class DataFetcher:
     from Spotify and save them to CSV files.
 
     Attributes:
-    ----------
-    sp : spotipy.Spotify
-        An authenticated Spotipy client instance.
+        sp : spotipy.Spotify
+            An authenticated Spotipy client instance.
 
     Examples:
-    --------
-    >>> from src.spotify_client import SpotifyClient
-    >>> sp = SpotifyClient(*args)
-    >>> fetcher = DataFetcher(sp)
-    >>> fetcher.fetch_all_albums('my_albums.csv')
+        Basic usage:
+
+        ```
+        from src.spotify_client import SpotifyClient
+        sp = SpotifyClient(*args)
+        fetcher = DataFetcher(sp)
+        fetcher.fetch_all_albums('my_albums.csv')
+        ```
     """
 
     def __init__(self, spotify_client: spotipy.Spotify):
@@ -37,9 +39,8 @@ class DataFetcher:
         Initializes the DataFetcher with an authenticated Spotipy client.
 
         Parameters:
-        ----------
-        spotify_client : spotipy.Spotify
-            An authenticated Spotipy client instance.
+            spotify_client : spotipy.Spotify
+                An authenticated Spotipy client instance.
         """
         self.sp: spotipy.Spotify = spotify_client
 
@@ -48,16 +49,14 @@ class DataFetcher:
         Calculates the total number of saved albums for the current user.
 
         Returns:
-        -------
-        int
-            The total number of saved albums.
+            int
+                The total number of saved albums.
 
         Raises:
-        ------
-        SpotifyAPIError
-            If there's an error communicating with the Spotify API.
-        UnexpectedError
-            If an unexpected error occurs.
+            SpotifyAPIError
+                If there's an error communicating with the Spotify API.
+            UnexpectedError
+                If an unexpected error occurs.
         """
         limit: int = 1
         try:
@@ -73,16 +72,14 @@ class DataFetcher:
         Calculates the total number of playlists for the current user.
 
         Returns:
-        -------
-        int
-            The total number of playlists.
+            int
+                The total number of playlists.
 
         Raises:
-        ------
-        SpotifyAPIError
-            If there's an error communicating with the Spotify API.
-        UnexpectedError
-            If an unexpected error occurs.
+            SpotifyAPIError
+                If there's an error communicating with the Spotify API.
+            UnexpectedError
+                If an unexpected error occurs.
         """
         limit: int = 1
         try:
@@ -102,21 +99,18 @@ class DataFetcher:
         Calculates the total number of tracks in a given playlist.
 
         Parameters:
-        ----------
-        playlist_id : str
-            The ID of the playlist.
+            playlist_id : str
+                The ID of the playlist.
 
         Returns:
-        -------
-        int
-            The total number of tracks in the playlist.
+            int
+                The total number of tracks in the playlist.
 
         Raises:
-        ------
-        SpotifyAPIError
-            If there's an error communicating with the Spotify API.
-        UnexpectedError
-            If an unexpected error occurs.
+            SpotifyAPIError
+                If there's an error communicating with the Spotify API.
+            UnexpectedError
+                If an unexpected error occurs.
         """
         try:
             playlist_info: Dict[str, Any] = self.sp.playlist(playlist_id)
@@ -133,29 +127,33 @@ class DataFetcher:
         Fetches all saved albums for the current user and saves them to a CSV file.
 
         Parameters:
-        ----------
-        csv_filepath : str
-            The file path where the CSV file will be saved.
-        pagination_limit : int, optional
-            Number of items to retrieve per API call (default is 50).
+            csv_filepath : str
+                The file path where the CSV file will be saved.
+            pagination_limit : int, optional
+                Number of items to retrieve per API call (default is 50).
 
         Raises:
-        ------
-        SpotifyAPIError
-            If there's an error communicating with the Spotify API.
-        FileWriteError
-            If there's an error writing to the CSV file.
-        UnexpectedError
-            If an unexpected error occurs.
+            SpotifyAPIError
+                If there's an error communicating with the Spotify API.
+            FileWriteError
+                If there's an error writing to the CSV file.
+            UnexpectedError
+                If an unexpected error occurs.
 
         Examples:
-        --------
-        >>> fetcher = DataFetcher(sp)
-        >>> # Standard usage
-        >>> fetcher.fetch_all_albums('my_albums.csv')
-        >>> 
-        >>> # With custom pagination limit
-        >>> fetcher.fetch_all_albums('my_albums.csv', pagination_limit=20)
+            Basic usage:
+        
+            ```
+            fetcher = DataFetcher(sp)
+            fetcher.fetch_all_albums('my_albums.csv')
+            ```
+        
+            With custom pagination limit
+
+            ```
+            fetcher = DataFetcher(sp)
+            fetcher.fetch_all_albums('my_albums.csv', pagination_limit=20)
+            ```
         """
         total_albums: int = self.calculate_total_albums()
         albums: List[Dict[str, Any]] = []
@@ -205,29 +203,33 @@ class DataFetcher:
         Fetches all playlists for the current user and saves them to a CSV file.
 
         Parameters:
-        ----------
-        csv_filepath : str
-            The file path where the CSV file will be saved.
-        pagination_limit : int, optional
-            Number of items to retrieve per API call (default is 50).
+            csv_filepath : str
+                The file path where the CSV file will be saved.
+            pagination_limit : int, optional
+                Number of items to retrieve per API call (default is 50).
 
         Raises:
-        ------
-        SpotifyAPIError
-            If there's an error communicating with the Spotify API.
-        FileWriteError
-            If there's an error writing to the CSV file.
-        UnexpectedError
-            If an unexpected error occurs.
+            SpotifyAPIError
+                If there's an error communicating with the Spotify API.
+            FileWriteError
+                If there's an error writing to the CSV file.
+            UnexpectedError
+                If an unexpected error occurs.
 
         Examples:
-        --------
-        >>> fetcher = DataFetcher(sp)
-        >>> # Save all user playlists to CSV
-        >>> fetcher.fetch_all_playlists('my_playlists.csv')
-        >>> 
-        >>> # With smaller batch size
-        >>> fetcher.fetch_all_playlists('my_playlists.csv', pagination_limit=10)
+            Basic usage:
+
+            ```
+            fetcher = DataFetcher(sp)
+            # Save all user playlists to CSV
+            fetcher.fetch_all_playlists('my_playlists.csv')
+            ```
+
+            With smaller batch size
+
+            ```
+            fetcher.fetch_all_playlists('my_playlists.csv', pagination_limit=10)
+            ```
         """
         total_playlists: int = self.calculate_total_playlists()
         play_lists: List[Dict[str, Any]] = []
@@ -287,36 +289,40 @@ class DataFetcher:
         Fetches all tracks from a given playlist and saves them to a CSV file.
 
         Parameters:
-        ----------
-        playlist_id : str
-            The ID of the playlist.
-        csv_filepath : str
-            The file path where the CSV file will be saved.
-        pagination_limit : int, optional
-            Number of items to retrieve per API call (default is 50).
+            playlist_id : str
+                The ID of the playlist.
+            csv_filepath : str
+                The file path where the CSV file will be saved.
+            pagination_limit : int, optional
+                Number of items to retrieve per API call (default is 50).
 
         Raises:
-        ------
-        SpotifyAPIError
-            If there's an error communicating with the Spotify API.
-        FileWriteError
-            If there's an error writing to the CSV file.
-        UnexpectedError
-            If an unexpected error occurs.
+            SpotifyAPIError
+                If there's an error communicating with the Spotify API.
+            FileWriteError
+                If there's an error writing to the CSV file.
+            UnexpectedError
+                If an unexpected error occurs.
 
         Examples:
-        --------
-        >>> fetcher = DataFetcher(sp)
-        >>> # Fetch tracks from a specific playlist
-        >>> playlist_id = '37i9dQZEVXcQ9COmYvdajy'  # Example playlist ID
-        >>> fetcher.fetch_tracks_from_playlist(playlist_id, 'playlist_tracks.csv')
-        >>> 
-        >>> # Use a custom pagination limit
-        >>> fetcher.fetch_tracks_from_playlist(
-        ...     '37i9dQZEVXcQ9COmYvdajy',
-        ...     'playlist_tracks.csv',
-        ...     pagination_limit=25
-        ... )
+            Basic usage:
+
+            ```
+            fetcher = DataFetcher(sp)
+            # Fetch tracks from a specific playlist
+            playlist_id = '37i9dQZEVXcQ9COmYvdajy'  # Example playlist ID
+            fetcher.fetch_tracks_from_playlist(playlist_id, 'playlist_tracks.csv')
+            ```
+
+            With a custom pagination limit:
+
+            ```
+            fetcher.fetch_tracks_from_playlist(
+                '37i9dQZEVXcQ9COmYvdajy',
+                'playlist_tracks.csv',
+                pagination_limit=25
+                )
+            ```
         """
         total_tracks: int = self.calculate_total_tracks(playlist_id=playlist_id)
         tracks: List[Dict[str, Any]] = []
