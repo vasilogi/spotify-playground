@@ -38,7 +38,7 @@ class DataFetcher:
         """
         Initializes the DataFetcher with an authenticated Spotipy client.
 
-        Parameters:
+        Args:
             spotify_client : spotipy.Spotify
                 An authenticated Spotipy client instance.
         """
@@ -98,7 +98,7 @@ class DataFetcher:
         """
         Calculates the total number of tracks in a given playlist.
 
-        Parameters:
+        Args:
             playlist_id : str
                 The ID of the playlist.
 
@@ -126,7 +126,7 @@ class DataFetcher:
         """
         Fetches all saved albums for the current user and saves them to a CSV file.
 
-        Parameters:
+        Args:
             csv_filepath : str
                 The file path where the CSV file will be saved.
             pagination_limit : int, optional
@@ -202,7 +202,7 @@ class DataFetcher:
         """
         Fetches all playlists for the current user and saves them to a CSV file.
 
-        Parameters:
+        Args:
             csv_filepath : str
                 The file path where the CSV file will be saved.
             pagination_limit : int, optional
@@ -288,7 +288,7 @@ class DataFetcher:
         """
         Fetches all tracks from a given playlist and saves them to a CSV file.
 
-        Parameters:
+        Args:
             playlist_id : str
                 The ID of the playlist.
             csv_filepath : str

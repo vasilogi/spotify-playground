@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 # Custom modules
 from src.data_fetcher import DataFetcher
-from src.spotify_client import SpotifyClient
+from src.spotify_wrapper import SpotifyClient
 
 def arg_parser():
     """Function to parse arguments from terminal"""
