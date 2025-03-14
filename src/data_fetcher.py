@@ -347,16 +347,7 @@ class DataFetcher:
                         # check if track exists
                         if item['track'] is not None:
                             track: Dict[str, Any] = item['track']
-                            tracks.append(
-                                {
-                                    'Track ID':track['id'],
-                                    'Track Name': track['name'],
-                                    'Track Popularity': track['popularity'],
-                                    'Track Duration': track['duration_ms'],
-                                    'Track Album Name': track['album']['name'],
-                                    'Track Artists': ", ".join(artist['name'] for artist in track['artists'])
-                                }
-                            )
+                            tracks.append(self._get_track_info(track))
                     # Update progress and offset
                     offset+=pagination_limit
                     pbar.update(len(playlist_items))
@@ -380,3 +371,16 @@ class DataFetcher:
             raise UnexpectedError(
                 f"An unexpected error occured while writing all tracks to the CSV: {e}"
             ) from e
+
+    def _get_track_info(self, track: dict) -> dict:
+        """
+        Helper function to get the desired information from a track of a playlist
+        """
+        return {
+            'Track ID':track['id'],
+            'Track Name': track['name'],
+            'Track Popularity': track['popularity'],
+            'Track Duration': track['duration_ms'],
+            'Track Album Name': track['album']['name'],
+            'Track Artists': ", ".join(artist['name'] for artist in track['artists'])
+        }
