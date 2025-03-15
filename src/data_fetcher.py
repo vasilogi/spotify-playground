@@ -1,8 +1,8 @@
+# 3rd party packages
 from typing import List, Dict, Any
 import pandas as pd
 from tqdm import tqdm
 import spotipy
-import time
 
 # Custom modules
 from .exceptions import (
@@ -13,70 +13,180 @@ from .exceptions import (
 
 
 class DataFetcher:
+    """
+    A class to fetch data from Spotify using the Spotipy library.
+
+    This class provides methods to retrieve user albums, playlists, and tracks
+    from Spotify and save them to CSV files.
+
+    Attributes:
+        sp : spotipy.Spotify
+            An authenticated Spotipy client instance.
+
+    Examples:
+        Basic usage:
+
+        ```
+        from src.spotify_client import SpotifyClient
+        sp = SpotifyClient(*args)
+        fetcher = DataFetcher(sp)
+        fetcher.fetch_all_albums('my_albums.csv')
+        ```
+    """
 
     def __init__(self, spotify_client: spotipy.Spotify):
-        self.sp: spotipy.Spotify = spotify_client
-        self.pagination_limit: int = 50
+        """
+        Initializes the DataFetcher with an authenticated Spotipy client.
 
+        Args:
+            spotify_client : spotipy.Spotify
+                An authenticated Spotipy client instance.
+        """
+        self.sp: spotipy.Spotify = spotify_client
 
     def calculate_total_albums(self) -> int:
-        
+        """
+        Calculates the total number of saved albums for the current user.
+
+        Returns:
+            int
+                The total number of saved albums.
+
+        Raises:
+            SpotifyAPIError
+                If there's an error communicating with the Spotify API.
+            UnexpectedError
+                If an unexpected error occurs.
+        """
         limit: int = 1
-        
         try:
             results: Dict[str, Any] = self.sp.current_user_saved_albums(limit=limit)
+            return results['total']
         except spotipy.SpotifyException as e:
-            raise SpotifyAPIError(f"Failed to fetch albums: {e}") from e
-        
-        return results['total']
-    
+            raise SpotifyAPIError(f"Failed to fetch albums - calculate_total_albums: {e}") from e
+        except Exception as e:
+            raise UnexpectedError(f"Unexpected error occured - calculate_total_albums: {e}") from e
+
     def calculate_total_playlists(self) -> int:
-        
+        """
+        Calculates the total number of playlists for the current user.
+
+        Returns:
+            int
+                The total number of playlists.
+
+        Raises:
+            SpotifyAPIError
+                If there's an error communicating with the Spotify API.
+            UnexpectedError
+                If an unexpected error occurs.
+        """
         limit: int = 1
-        
         try:
             results: Dict[str, Any] = self.sp.current_user_playlists(limit=limit)
+            return results['total']
         except spotipy.SpotifyException as e:
-            raise SpotifyAPIError(f"Failed to fetch playlists: {e}") from e
-        
-        return results['total']
-    
+            raise SpotifyAPIError(
+                f"Failed to fetch playlists - calculate_total_playlists: {e}"
+            ) from e
+        except Exception as e:
+            raise UnexpectedError(
+                f"Unexpected error occured - calculate_total_albums: {e}"
+            ) from e
+
     def calculate_total_tracks(self, playlist_id: str) -> int:
-        
+        """
+        Calculates the total number of tracks in a given playlist.
+
+        Args:
+            playlist_id : str
+                The ID of the playlist.
+
+        Returns:
+            int
+                The total number of tracks in the playlist.
+
+        Raises:
+            SpotifyAPIError
+                If there's an error communicating with the Spotify API.
+            UnexpectedError
+                If an unexpected error occurs.
+        """
         try:
             playlist_info: Dict[str, Any] = self.sp.playlist(playlist_id)
             return playlist_info['tracks']['total']
         except spotipy.SpotifyException as e:
             raise SpotifyAPIError(f"Failed to fetch tracks from a playlist: {e}") from e
+        except Exception as e:
+            raise UnexpectedError(
+                f"Unexpected error occured - calculate_total tracks: {e}"
+            ) from e
 
-    
-    def fetch_all_albums(self, csv_filepath: str) -> None:
+    def fetch_all_albums(self, csv_filepath: str, pagination_limit: int = 50) -> None:
+        """
+        Fetches all saved albums for the current user and saves them to a CSV file.
 
+        Args:
+            csv_filepath : str
+                The file path where the CSV file will be saved.
+            pagination_limit : int, optional
+                Number of items to retrieve per API call (default is 50).
+
+        Raises:
+            SpotifyAPIError
+                If there's an error communicating with the Spotify API.
+            FileWriteError
+                If there's an error writing to the CSV file.
+            UnexpectedError
+                If an unexpected error occurs.
+
+        Examples:
+            Basic usage:
+        
+            ```
+            fetcher = DataFetcher(sp)
+            fetcher.fetch_all_albums('my_albums.csv')
+            ```
+        
+            With custom pagination limit
+
+            ```
+            fetcher = DataFetcher(sp)
+            fetcher.fetch_all_albums('my_albums.csv', pagination_limit=20)
+            ```
+        """
         total_albums: int = self.calculate_total_albums()
         albums: List[Dict[str, Any]] = []
         offset: int = 0
-        limit: int = self.pagination_limit
         with tqdm(total=total_albums, desc='Fetching all albums') as pbar:
             while True:
                 try:
-                    results: Dict[str, Any] = self.sp.current_user_saved_albums(limit=limit, offset=offset)
+                    results: Dict[str, Any] = self.sp.current_user_saved_albums(
+                        limit=pagination_limit,
+                        offset=offset
+                    )
+                    if not results['items']:
+                        break
+                    for item in results['items']:
+                        album: Dict[str, Any] = item['album']
+                        albums.append(
+                            {
+                            'Album Name': album['name'],
+                            'Artists': ", ".join(artist['name'] for artist in album['artists']),
+                            'Release Date': album['release_date'],
+                            'Popularity': album['popularity'],
+                            'Image URL': album['images'][0]['url']
+                            }
+                        )
+                    # Update offset and progress bar
+                    offset += pagination_limit
+                    pbar.update(len(results['items']))
                 except spotipy.SpotifyException as e:
-                    raise SpotifyAPIError(f"Failed to fetch albums: {e}") from e
-                if not results['items']:
-                    break
-                for item in results['items']:
-                    album: Dict[str, Any] = item['album']
-                    albums.append({
-                        'Album Name': album['name'],
-                        'Artists': ", ".join(artist['name'] for artist in album['artists']),
-                        'Release Date': album['release_date'],
-                        'Popularity': album['popularity'],
-                        'Image URL': album['images'][0]['url']
-                    })
-                
-                # Update offset and progress bar
-                offset += limit
-                pbar.update(len(results['items']))
+                    raise SpotifyAPIError(f"Failed to fetch albums - fetch_all_albums: {e}") from e
+                except Exception as e:
+                    raise UnexpectedError(
+                        f"Unexpected error occured - fetch_all_albums: {e}"
+                    ) from e
 
         # Save dataframe into a CSV
         df: pd.DataFrame = pd.DataFrame(albums)
@@ -84,37 +194,78 @@ class DataFetcher:
             df.to_csv(csv_filepath, index=False)
             print(f"All Albums dataFrame successfully saved in {csv_filepath}.")
         except IOError as e:
-            raise FileWriteError("Unable to write to the CSV file: {e}") from e
+            raise FileWriteError(f"Unable to write to the CSV file: {e}") from e
         except Exception as e:
             raise UnexpectedError(f"An unexpected error occured while writing the CSV: {e}") from e
-        
-    def fetch_all_playlists(self, csv_filepath: str) -> None:
-        
+
+    def fetch_all_playlists(self, csv_filepath: str, pagination_limit: int = 50) -> None:
+        """
+        Fetches all playlists for the current user and saves them to a CSV file.
+
+        Args:
+            csv_filepath : str
+                The file path where the CSV file will be saved.
+            pagination_limit : int, optional
+                Number of items to retrieve per API call (default is 50).
+
+        Raises:
+            SpotifyAPIError
+                If there's an error communicating with the Spotify API.
+            FileWriteError
+                If there's an error writing to the CSV file.
+            UnexpectedError
+                If an unexpected error occurs.
+
+        Examples:
+            Basic usage:
+
+            ```
+            fetcher = DataFetcher(sp)
+            # Save all user playlists to CSV
+            fetcher.fetch_all_playlists('my_playlists.csv')
+            ```
+
+            With smaller batch size
+
+            ```
+            fetcher.fetch_all_playlists('my_playlists.csv', pagination_limit=10)
+            ```
+        """
         total_playlists: int = self.calculate_total_playlists()
         play_lists: List[Dict[str, Any]] = []
         offset: int = 0
-        limit: int = self.pagination_limit
-        
         with tqdm(total=total_playlists, desc='Fetching all playlists') as pbar:
             # loop over all current user playlists
             while True:
-                current_user_playlists: Dict[str, Any] = self.sp.current_user_playlists(limit=limit, offset=offset)
-                playlists: Dict[str, Any] = current_user_playlists['items']
-                # exit the loop if no playlists are found
-                if not playlists:
-                    break
-                # loop over playlists
-                for playlist in playlists:
-                    play_lists.append(
-                        {
-                            'Playlist Name': playlist['name'],
-                            'Playlist ID': playlist['id']
-                        }
+                try:
+                    current_user_playlists: Dict[str, Any] = self.sp.current_user_playlists(
+                        limit=pagination_limit,
+                        offset=offset
                     )
+                    playlists: Dict[str, Any] = current_user_playlists['items']
+                    # exit the loop if no playlists are found
+                    if not playlists:
+                        break
+                    # loop over playlists
+                    for playlist in playlists:
+                        play_lists.append(
+                            {
+                                'Playlist Name': playlist['name'],
+                                'Playlist ID': playlist['id']
+                            }
+                        )
 
-                # Update offset and progress bar
-                offset += limit
-                pbar.update(len(current_user_playlists['items']))
+                    # Update offset and progress bar
+                    offset += pagination_limit
+                    pbar.update(len(current_user_playlists['items']))
+                except spotipy.SpotifyException as e:
+                    raise SpotifyAPIError(
+                        f"Failed to fetch all playlists - fetch_all_playlists: {e}"
+                    ) from e
+                except Exception as e:
+                    raise UnexpectedError(
+                        f"Unexpected error occured - fetch_all_playlists: {e}"
+                    ) from e
 
             # Save dataframe into a CSV
             df: pd.DataFrame = pd.DataFrame(play_lists)
@@ -128,20 +279,62 @@ class DataFetcher:
                     f"An unexpected error occured while writing all playlists to the CSV: {e}"
                 ) from e
 
-    def fetch_tracks_from_playlist(self, playlist_id: str, csv_filepath: str) -> None:
+    def fetch_tracks_from_playlist(
+            self,
+            playlist_id: str,
+            csv_filepath: str,
+            pagination_limit: int = 50
+    ) -> None:
+        """
+        Fetches all tracks from a given playlist and saves them to a CSV file.
+
+        Args:
+            playlist_id : str
+                The ID of the playlist.
+            csv_filepath : str
+                The file path where the CSV file will be saved.
+            pagination_limit : int, optional
+                Number of items to retrieve per API call (default is 50).
+
+        Raises:
+            SpotifyAPIError
+                If there's an error communicating with the Spotify API.
+            FileWriteError
+                If there's an error writing to the CSV file.
+            UnexpectedError
+                If an unexpected error occurs.
+
+        Examples:
+            Basic usage:
+
+            ```
+            fetcher = DataFetcher(sp)
+            # Fetch tracks from a specific playlist
+            playlist_id = '37i9dQZEVXcQ9COmYvdajy'  # Example playlist ID
+            fetcher.fetch_tracks_from_playlist(playlist_id, 'playlist_tracks.csv')
+            ```
+
+            With a custom pagination limit:
+
+            ```
+            fetcher.fetch_tracks_from_playlist(
+                '37i9dQZEVXcQ9COmYvdajy',
+                'playlist_tracks.csv',
+                pagination_limit=25
+                )
+            ```
+        """
         total_tracks: int = self.calculate_total_tracks(playlist_id=playlist_id)
         tracks: List[Dict[str, Any]] = []
         offset: int = 0
-        limit: int = self.pagination_limit
-        
         with tqdm(total=total_tracks, desc='Fetching all tracks from a playlist') as pbar:
-            # loop over all current user playlists
+            # loop over all current user playlists (update offset)
             while True:
                 try:
                     # get the playlist tracks object
                     playlist_tracks: Dict[str, Any] = self.sp.playlist_tracks(
                         playlist_id= playlist_id,
-                        limit=limit,
+                        limit=pagination_limit,
                         offset=offset
                     )
                     # get playlist items
@@ -153,28 +346,19 @@ class DataFetcher:
                     for item in playlist_items:
                         # check if track exists
                         if item['track'] is not None:
-                            track = item['track']
-                            tracks.append(
-                                {
-                                    'Track ID':track['id'],
-                                    'Track Name': track['name'],
-                                    'Track Popularity': track['popularity'],
-                                    'Track Duration': track['duration_ms'],
-                                    'Track Album Name': track['album']['name'],
-                                    'Track Artists': ", ".join(artist['name'] for artist in track['artists'])
-                                }
-                            )
+                            track: Dict[str, Any] = item['track']
+                            tracks.append(self._get_track_info(track))
                     # Update progress and offset
-                    offset+=limit
+                    offset+=pagination_limit
                     pbar.update(len(playlist_items))
-
-                    # Avoid rate limiting with a small pause
-                    time.sleep(0.5)
+                except spotipy.SpotifyException as e:
+                    raise SpotifyAPIError(
+                        f"Failed to fetch playlist tracks - fetch_tracks_from_playlist: {e}"
+                    ) from e
                 except Exception as e:
-                    print(f"Error occured while trying to fetch playlists tracks: {e}")
-                    print("Attempting to reconnect in 3 seconds...")
-                    time.sleep(3)
-                    continue
+                    raise UnexpectedError(
+                        f"Unexpected error while fetching playlist tracks: {e}"
+                    ) from e
 
         # Save dataframe into a CSV
         df: pd.DataFrame = pd.DataFrame(tracks)
@@ -182,8 +366,21 @@ class DataFetcher:
             df.to_csv(csv_filepath, index=False)
             print(f"All tracks dataFrame successfully saved in {csv_filepath}.")
         except IOError as e:
-            raise FileWriteError("Unable to write all tracks to the CSV file: {e}") from e
+            raise FileWriteError(f"Unable to write all tracks to the CSV file: {e}") from e
         except Exception as e:
             raise UnexpectedError(
                 f"An unexpected error occured while writing all tracks to the CSV: {e}"
             ) from e
+
+    def _get_track_info(self, track: dict) -> dict:
+        """
+        Helper function to get the desired information from a track of a playlist
+        """
+        return {
+            'Track ID':track['id'],
+            'Track Name': track['name'],
+            'Track Popularity': track['popularity'],
+            'Track Duration': track['duration_ms'],
+            'Track Album Name': track['album']['name'],
+            'Track Artists': ", ".join(artist['name'] for artist in track['artists'])
+        }
