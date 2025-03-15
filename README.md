@@ -2,8 +2,6 @@
 
 A command-line interface tool for exporting your Spotify library data to CSV format. This tool allows you to easily extract your saved albums, playlists, and track details for analysis or backup purposes.
 
-![Spotify CLI](https://img.shields.io/badge/Spotify-CLI-1DB954?style=for-the-badge&logo=spotify&l/img.shields.io/badge/Python-3.8+-blue?style=for-the-badge&logo=python&logoColor=whiteelds.io/badge/License-MIT-yellow?stures
-
 - Export all saved albums to CSV
 - Export all playlists to CSV
 - Export tracks from a specific playlist to CSV
