@@ -1,5 +1,7 @@
 # spotify-playground
 
+python -m venv .venv
+
 ```bash
 python .\fetch_all_albums.py --scope "user-library-read" --output-csv-path "./all_albums.csv"
 ```
